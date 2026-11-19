@@ -66,3 +66,32 @@
 #feedScreen .feed-compose{position:sticky;top:0;z-index:3}
 #feedScreen .feed-compose b{font-size:12px;letter-spacing:.8px}
 #feedScreen .feed-compose small{font-size:10px}
+
+
+/* GTA phone-camera inspired capture HUD */
+#cameraScreen{background:#10100f}
+#cameraScreen .camera-top{margin-bottom:12px}
+#cameraScreen .camera-top h1{font-size:25px;letter-spacing:1.5px}
+#cameraScreen .viewfinder{height:clamp(350px,56vh,620px);border:0;background:#050505;box-shadow:0 0 0 1px #ffffff20}
+#cameraScreen .viewfinder video,#cameraScreen .viewfinder>img{object-fit:cover}
+#cameraScreen .view-shade{background:linear-gradient(180deg,#0009 0%,transparent 18%,transparent 75%,#000b 100%)}
+#cameraScreen .camera-top-hud{left:10px;right:10px;top:10px;gap:8px}
+#cameraScreen .cam-pill{background:#111b;color:#fff;border:1px solid #ffffff45;border-radius:20px;padding:7px 9px;font-size:8px;font-weight:800;letter-spacing:1px;backdrop-filter:blur(8px)}
+#cameraScreen .cam-location{color:#fff;font-size:8px;letter-spacing:1.4px;font-weight:800;text-shadow:0 1px 5px #000;text-align:center}
+#cameraScreen .rec-dot{color:#ed4e48;font-size:8px;margin-right:4px}
+#cameraScreen .camera-crosshair{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);pointer-events:none;opacity:.75}
+#cameraScreen .camera-crosshair i:first-child{position:absolute;left:10px;top:0;bottom:0;width:1px;background:#fff}
+#cameraScreen .camera-crosshair i:last-child{position:absolute;top:10px;left:0;right:0;height:1px;background:#fff}
+#cameraScreen .camera-side-label{position:absolute;right:9px;top:45%;writing-mode:vertical-rl;color:#ffffffb0;font-size:7px;letter-spacing:2px;text-shadow:0 1px 4px #000}
+#cameraScreen .viewfinder-bottom{left:10px;right:10px;bottom:10px}
+#cameraScreen .viewfinder-bottom span{background:#111b;border:1px solid #ffffff35;border-radius:15px;padding:7px 9px;color:#fff;font-size:7px;font-weight:800;backdrop-filter:blur(8px)}
+#cameraScreen .camera-tools{padding:12px 2px 5px}
+#cameraScreen .tool{min-width:55px}
+#cameraScreen .tool span{width:36px;height:36px;display:grid;place-items:center;border:1px solid #ffffff45;border-radius:50%;background:#24241f;font-size:18px}
+#cameraScreen .tool.active span{border-color:var(--yellow);color:var(--yellow)}
+#cameraScreen .shutter-row{height:88px}
+#cameraScreen .shutter{width:72px;height:72px;border:2px solid #fff;box-shadow:0 0 0 3px #ffffff35}
+#cameraScreen .shutter i{width:58px;height:58px;background:#fff}
+#cameraScreen .last-shot span,#cameraScreen .import-shot span{border-radius:50%;width:42px;height:42px;background:#24241f;border:1px solid #ffffff65}
+#cameraScreen .camera-footer{border-top:1px solid #ffffff22;color:#77766c}
+#feedScreen .feed-end:after{content:'Fan-made Snapmatic feed · GTA VI promotional images';display:block;margin-top:7px;font-size:8px;letter-spacing:.3px;color:#aaa}
