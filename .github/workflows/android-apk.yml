@@ -20,13 +20,36 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
+      - name: Download official GTA VI screenshot collection
+        run: |
+          mkdir -p /tmp/gta-vi-official app/src/main/assets/www/assets/gta-official
+          curl -fL --retry 3 'https://media-rockstargames-com.akamaized.net/VI/downloads/screenshots/GTAVI_Screenshots.zip' -o /tmp/gta-vi-screenshots.zip
+          unzip -q /tmp/gta-vi-screenshots.zip -d /tmp/gta-vi-official
+          python3 - <<'PY'
+          import json, pathlib, shutil
+          source = pathlib.Path('/tmp/gta-vi-official')
+          target = pathlib.Path('app/src/main/assets/www/assets/gta-official')
+          extensions = {'.jpg', '.jpeg', '.png', '.webp'}
+          files = sorted(p for p in source.rglob('*') if p.is_file() and p.suffix.lower() in extensions)
+          if not files:
+              raise SystemExit('The Rockstar screenshot archive contained no supported image files.')
+          names = []
+          for index, path in enumerate(files, 1):
+              name = f'gta-vi-{index:03d}{path.suffix.lower()}'
+              shutil.copy2(path, target / name)
+              names.append('assets/gta-official/' + name)
+          (target / 'manifest.json').write_text(json.dumps(names), encoding='utf-8')
+          print(f'Bundled {len(names)} official GTA VI screenshots')
+          PY
       - name: Bundle web app into Android assets
         run: |
           mkdir -p app/src/main/assets/www
           cp index.html app.js style.css manifest.webmanifest sw.js app/src/main/assets/www/
-          cp -R assets app/src/main/assets/www/assets
+          cp -R assets/. app/src/main/assets/www/assets/
       - name: Build debug APK
         run: gradle --no-daemon assembleDebug
+      - name: Report APK size
+        run: du -h app/build/outputs/apk/debug/app-debug.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
