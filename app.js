@@ -6,9 +6,10 @@ let profileBio=localStorage.getItem('snapmatic-bio')||'Living life one frame at 
 let profileLocation=localStorage.getItem('snapmatic-location')||'Vice City, Leonida';
 let profileAvatar=localStorage.getItem('snapmatic-avatar')||'';
 let feedPage=0,feedSearchText='',feedFilterMode='all';
-let prefs={ratio:'4:3',quality:'0.92',grid:true,stamp:true,...JSON.parse(localStorage.getItem(PREF)||'{}')};
+let prefs={ratio:'4:3',quality:'0.92',grid:true,stamp:true,...safeStoredJSON(PREF,{})};
 const looks={original:'none',golden:'sepia(.22) saturate(1.35) contrast(1.06) brightness(1.04)',noir:'grayscale(1) contrast(1.22) brightness(.94)',vice:'hue-rotate(315deg) saturate(1.4) contrast(1.05)',retro:'sepia(.42) saturate(.82) contrast(.92) brightness(1.06)',chrome:'saturate(.72) contrast(1.25) brightness(1.02)'};
-function loadPhotos(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
+function safeStoredJSON(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||JSON.stringify(fallback));return value??fallback}catch{return fallback}}
+function loadPhotos(){const value=safeStoredJSON(STORE,[]);return Array.isArray(value)?value:[]}
 function saveLibrary(){try{localStorage.setItem(STORE,JSON.stringify(photos));return true}catch(e){toast('Storage full. Export or delete some photos.');return false}}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2300)}
 function openModal(id){$('#'+id).classList.remove('hidden')}function closeModals(){$$('.modal').forEach(m=>m.classList.add('hidden'))}
@@ -132,8 +133,8 @@ const GTA_POSTS = (() => {
  return list;
 })();
 
-let likedGta = JSON.parse(localStorage.getItem('snapmatic-gta-likes') || '[]');
-let gtaComments = JSON.parse(localStorage.getItem('snapmatic-gta-comments') || '{}');
+let likedGta = safeStoredJSON('snapmatic-gta-likes',[]);if(!Array.isArray(likedGta))likedGta=[];
+let gtaComments = safeStoredJSON('snapmatic-gta-comments',{});if(!gtaComments||typeof gtaComments!=='object'||Array.isArray(gtaComments))gtaComments={};
 let commentTarget=null;
 function renderFeed(reset=true){
  const host=$('#feedPosts');if(!host)return;
@@ -170,6 +171,7 @@ function renderFeed(reset=true){
  feedPage++;
  $('#loadMorePosts').hidden=feedPage*20>=total;
  $('#loadMorePosts').textContent=feedPage*20>=total?'NO MORE POSTS':'LOAD MORE POSTS ↓';
+ const end=$('.feed-end');if(end)end.hidden=feedPage*20<total;
 }
 function openComments(target){
  commentTarget=target;const list=$('#commentsList');list.innerHTML='';
