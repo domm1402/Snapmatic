@@ -1,25 +1,26 @@
 # Snapmatic
 
-A mobile-first, GTA VI-inspired social photo app concept. The landing screen is a fictional Leonida social feed with stories, photo posts, locations, likes, search and sharing. It also includes a personal camera, local photo gallery, editor and profile.
+Snapmatic is a mobile-first, local-first photo app with a clean social-feed interface inspired by the in-game Snapmatic concept.
 
-## Features
-- Social feed with sample photo posts, story row, likes, search and share actions
-- Remote photographic demo imagery served from Unsplash
-- Camera with live viewfinder, grid, front/rear switching and shutter
-- Self timer (3 or 10 seconds), flash controls and camera looks
-- Import photos from the device
-- Private local gallery with favourites, sorting, captions and location
-- Editor with filters, brightness, contrast and saturation
-- Share sheet / image export
-- Camera ratio, quality, grid and location-stamp settings
-- Profile and local photo archive
-- PWA install support and offline app shell
+## Working features
+- Live camera capture with front/rear camera switching where supported
+- Import photos from your device
+- Every saved photo appears in your personal feed automatically
+- Captions and location metadata through the photo editor
+- Persistent likes and per-photo comments on this device
+- Personal profile name and photo count
+- Private gallery, favourites, sorting, editing, sharing and export
+- Camera timer, flash/torch where supported, grid, filters and capture settings
+- Installable PWA with offline app shell
 
-## Run
-Enable GitHub Pages for the repository (Settings → Pages → Build and deployment → GitHub Actions). Open the deployed HTTPS URL on your phone. Grant camera permission when using the Camera tab. Camera access requires HTTPS or localhost.
+## Run on Android
+Open the GitHub Pages HTTPS site in Chrome, grant camera permission, then use Chrome's install option to add Snapmatic to your home screen. Camera access requires HTTPS or localhost.
 
-## Photos and privacy
-The sample feed uses remote Unsplash image URLs and therefore needs an internet connection. Your own camera photos, imports, likes and profile settings are stored locally in the browser on your device. They are not uploaded to a server. Clearing browser site data can remove the local photo library, so export important images first.
+## Data and privacy
+Your photos, likes, comments and profile are stored in browser storage on this device. They are not uploaded to a server and are not visible to other users. Clearing browser site data can remove this data, so export important photos regularly.
 
-## Important
-This is an independent fan-made interface concept, not an official Rockstar product. It does not use Rockstar logos or extracted game screenshots. The feed is an original interpretation inspired by public descriptions of the GTA VI phone/social interface; it is not a one-to-one recreation of proprietary game UI.
+## Online community status
+This version is a working personal photo app, not yet a multi-user social network. Public accounts, cloud photo uploads, cross-device sync and comments between different users require a hosted backend, authentication and storage service.
+
+## Fan project
+Snapmatic is an independent fan-made app and is not affiliated with or endorsed by Rockstar Games.
