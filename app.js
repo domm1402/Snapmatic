@@ -44,52 +44,64 @@ $('#gridLines').classList.toggle('show',prefs.grid);updateClock();setInterval(up
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
 
-let commentPhotoId=null;
+
+const GTA_POSTS = [
+ {id:'gta-01',user:'vicecitydaily',place:'VICE CITY',image:'https://www.leftdownrightup.co.uk/images/screenshots/Jason_and_Lucia_03.jpg',caption:'Just another afternoon in Vice City. 🌴 #ViceCity #Leonida',likes:2841,comments:126,time:'18 MIN AGO'},
+ {id:'gta-02',user:'leonidastate',place:'LEONIDA KEYS',image:'https://i.imgur.com/u4k973q.jpeg',caption:'No speed limits in the Keys. #Leonida #OnTheRoad',likes:1937,comments:84,time:'42 MIN AGO'},
+ {id:'gta-03',user:'305afterdark',place:'VICE CITY',image:'https://gtaintel.com/cdn-cgi/image/width%3D1920%2Cquality%3D75%2Cformat%3Dauto%2Conerror%3Dredirect/images/screenshots/gta-6/138.webp',caption:'Things get complicated after dark. #ViceCityNights',likes:4210,comments:203,time:'1 HOUR AGO'},
+ {id:'gta-04',user:'coastlinecruiser',place:'SOUTH BEACH',image:'https://www.igrandtheftauto.com/content/images/jason-lucia-pre-order-background-video-still.jpg',caption:'Found the perfect parking spot. #SouthBeach #Cruising',likes:1672,comments:59,time:'2 HOURS AGO'}
+];
+let likedGta = JSON.parse(localStorage.getItem('snapmatic-gta-likes') || '[]');
+let gtaComments = JSON.parse(localStorage.getItem('snapmatic-gta-comments') || '{}');
+let commentTarget=null;
 function renderFeed(){
  const host=$('#feedPosts'); if(!host)return;
  host.innerHTML='';
- const rows=[...photos].sort((a,b)=>b.created-a.created);
- if(!rows.length){
-  const empty=document.createElement('div');empty.className='feed-empty';
-  const title=document.createElement('h2');title.textContent='Your feed starts here';
-  const copy=document.createElement('p');copy.textContent='Take a photo or import one. It will appear here as your first Snapmatic post.';
-  const action=document.createElement('button');action.className='yellow-btn';action.textContent='CREATE YOUR FIRST POST';action.onclick=()=>startCamera();
-  empty.append(title,copy,action);host.append(empty);return;
- }
- rows.forEach(p=>{
-  const post=document.createElement('article');post.className='feed-post';
-  const image=document.createElement('img');image.className='post-image';image.alt='Your Snapmatic post';image.src=p.data;image.onclick=()=>openPhoto(p.id);
+ const items=[
+  ...GTA_POSTS.map(p=>({...p,type:'gta'})),
+  ...[...photos].sort((a,b)=>b.created-a.created).map(p=>({...p,id:'local-'+p.id,type:'local',photoId:p.id,user:profileName,place:p.location||'MY PHOTOS',image:p.data,likes:p.liked?1:0,comments:(p.comments||[]).length,time:p.date+' · '+p.time}))
+ ];
+ items.forEach(p=>{
+  const post=document.createElement('article');post.className='feed-post '+(p.type==='local'?'local-post':'gta-post');
+  const image=document.createElement('img');image.className='post-image';image.alt='Snapmatic post from '+p.place;image.src=p.image;image.loading='lazy';
   const content=document.createElement('div');content.className='post-content';
   const userline=document.createElement('div');userline.className='post-userline';
-  const avatar=document.createElement('span');avatar.className='post-avatar initials';avatar.textContent=profileName.slice(0,2).toUpperCase();
-  const username=document.createElement('b');username.textContent='@'+profileName;
+  const avatar=document.createElement('span');avatar.className='post-avatar initials';avatar.textContent=p.user.slice(0,2).toUpperCase();
+  const username=document.createElement('b');username.textContent='@'+p.user;
   userline.append(avatar,username);
   const caption=document.createElement('p');caption.className='post-caption';caption.textContent=p.caption||'';
-  if(!p.caption)caption.classList.add('caption-empty');
   const actions=document.createElement('div');actions.className='post-actions';
-  const like=document.createElement('button');like.className='like-feed'+(p.liked?' liked':'');like.setAttribute('aria-label',p.liked?'Unlike post':'Like post');like.textContent=p.liked?'♥':'♡';
-  const likes=document.createElement('span');likes.className='post-count';likes.textContent=p.liked?'1':'0';
-  const comment=document.createElement('button');comment.className='comment-feed';comment.setAttribute('aria-label','Comments');comment.textContent='▢';
-  const comments=document.createElement('span');comments.className='post-count';comments.textContent=String((p.comments||[]).length);
-  like.onclick=()=>{p.liked=!p.liked;if(saveLibrary()){renderFeed();renderGallery();renderProfile()}};
-  comment.onclick=()=>openComments(p.id);
+  const liked=p.type==='gta'?likedGta.includes(p.id):!!photos.find(x=>x.id===p.photoId)?.liked;
+  const like=document.createElement('button');like.className='like-feed'+(liked?' liked':'');like.textContent=liked?'♥':'♡';like.setAttribute('aria-label','Like post');
+  const likes=document.createElement('span');likes.className='post-count';likes.textContent=(p.likes+(p.type==='gta'&&liked?1:0)).toLocaleString();
+  const comment=document.createElement('button');comment.className='comment-feed';comment.textContent='▢';comment.setAttribute('aria-label','Comments');
+  const comments=document.createElement('span');comments.className='post-count';comments.textContent=p.type==='gta'?String(p.comments+(gtaComments[p.id]||[]).length):String((photos.find(x=>x.id===p.photoId)?.comments||[]).length);
+  like.onclick=()=>{
+   if(p.type==='gta'){likedGta=likedGta.includes(p.id)?likedGta.filter(x=>x!==p.id):likedGta.concat(p.id);localStorage.setItem('snapmatic-gta-likes',JSON.stringify(likedGta))}
+   else{const own=photos.find(x=>x.id===p.photoId);if(own){own.liked=!own.liked;saveLibrary();renderGallery();renderProfile()}}
+   renderFeed();
+  };
+  comment.onclick=()=>openComments(p.type==='gta'?{type:'gta',id:p.id}:{type:'local',id:p.photoId});
   actions.append(like,likes,comment,comments);
-  const timestamp=document.createElement('div');timestamp.className='post-time';timestamp.textContent=(p.date||'')+' · '+(p.time||'');
+  const timestamp=document.createElement('div');timestamp.className='post-time';timestamp.textContent=p.time||'JUST NOW';
   content.append(userline,caption,actions,timestamp);post.append(image,content);host.append(post);
  });
 }
-function openComments(id){
- commentPhotoId=id;const p=photos.find(x=>x.id===id);if(!p)return;
- const list=$('#commentsList');list.innerHTML='';
- const comments=p.comments||[];
- if(!comments.length){const empty=document.createElement('p');empty.className='no-comments';empty.textContent='No comments yet. Start the conversation.';list.append(empty)}
- comments.forEach(c=>{const item=document.createElement('div');item.className='comment-item';const name=document.createElement('b');name.textContent=c.name||profileName;const body=document.createElement('p');body.textContent=c.text;item.append(name,body);list.append(item)});
+function openComments(target){
+ commentTarget=target;const list=$('#commentsList');list.innerHTML='';
+ let entries=[];
+ if(target.type==='gta')entries=gtaComments[target.id]||[];
+ else entries=(photos.find(x=>x.id===target.id)?.comments||[]);
+ if(!entries.length){const empty=document.createElement('p');empty.className='no-comments';empty.textContent='No comments yet. Start the conversation.';list.append(empty)}
+ entries.forEach(c=>{const item=document.createElement('div');item.className='comment-item';const name=document.createElement('b');name.textContent=c.name||profileName;const body=document.createElement('p');body.textContent=c.text;item.append(name,body);list.append(item)});
  openModal('commentsModal');
 }
 $('#commentForm').onsubmit=e=>{
- e.preventDefault();const p=photos.find(x=>x.id===commentPhotoId),input=$('#commentInput'),value=input.value.trim();if(!p||!value)return;
- p.comments=p.comments||[];p.comments.push({name:profileName,text:value,created:Date.now()});
- if(saveLibrary()){input.value='';openComments(p.id);renderFeed();toast('COMMENT ADDED')}
+ e.preventDefault();const input=$('#commentInput'),value=input.value.trim();if(!commentTarget||!value)return;
+ const entry={name:profileName,text:value,created:Date.now()};
+ if(commentTarget.type==='gta'){gtaComments[commentTarget.id]=gtaComments[commentTarget.id]||[];gtaComments[commentTarget.id].push(entry);localStorage.setItem('snapmatic-gta-comments',JSON.stringify(gtaComments))}
+ else{const p=photos.find(x=>x.id===commentTarget.id);if(!p)return;p.comments=p.comments||[];p.comments.push(entry);if(!saveLibrary())return}
+ input.value='';openComments(commentTarget);renderFeed();toast('COMMENT SAVED ON THIS PHONE');
 };
 $('#feedCamera').onclick=()=>startCamera();
 renderFeed();
