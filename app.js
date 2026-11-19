@@ -56,15 +56,12 @@ function renderFeed(query='') {
  const rows=feedItems.filter(p=>(p.user+' '+p.place+' '+p.caption).toLowerCase().includes(q));
  rows.forEach(p=>{
   const liked=likedFeed.includes(p.id),el=document.createElement('article');el.className='feed-post';
-  el.innerHTML='<div class="post-head"><img class="post-avatar" alt="" src="'+p.avatar+'"><div class="post-user"><b>'+p.user+'</b><small>⌖ '+p.place+'</small></div><button class="post-more" aria-label="More">···</button></div><img class="post-image" alt="Photo from '+p.place+'" src="'+p.image+'"><div class="post-actions"><button class="like-feed '+(liked?'liked':'')+'" aria-label="Like">'+(liked?'♥':'♡')+'</button><button class="comment-feed" aria-label="Comment">◯</button><button class="share-feed" aria-label="Share">↗</button><button class="save-post" aria-label="Save">▱</button></div><div class="post-likes">'+(p.likes+(liked?1:0)).toLocaleString()+' LIKES</div><div class="post-caption"><b>'+p.user+'</b>'+p.caption+'</div><div class="post-comments"><button>View all '+p.comments+' comments</button></div><div class="post-time">'+p.time+'</div>';
-  el.querySelector('.like-feed').onclick=()=>{likedFeed=likedFeed.includes(p.id)?likedFeed.filter(x=>x!==p.id):likedFeed.concat(p.id);localStorage.setItem('snapmatic-feed-likes',JSON.stringify(likedFeed));renderFeed($('#feedSearch').value)};
+  el.innerHTML='<img class="post-image" alt="Photo from '+p.place+'" src="'+p.image+'"><div class="post-content"><div class="post-userline"><img class="post-avatar" alt="" src="'+p.avatar+'"><b>'+p.user+'</b></div><div class="post-caption">'+p.caption+'</div><div class="post-actions"><button class="like-feed '+(liked?'liked':'')+'" aria-label="Like">'+(liked?'♥':'♡')+'</button><span class="post-count">'+(p.likes+(liked?1:0)).toLocaleString()+'</span><button class="comment-feed" aria-label="Comments">▢</button><span class="post-count">'+p.comments+'</span></div></div>';
+  el.querySelector('.like-feed').onclick=()=>{likedFeed=likedFeed.includes(p.id)?likedFeed.filter(x=>x!==p.id):likedFeed.concat(p.id);localStorage.setItem('snapmatic-feed-likes',JSON.stringify(likedFeed));renderFeed($('#feedSearch')?.value||'')};
   el.querySelector('.comment-feed').onclick=()=>toast('COMMENTS · '+p.comments+' ON THIS POST');
-  el.querySelector('.share-feed').onclick=()=>{if(navigator.share)navigator.share({title:'Snapmatic · '+p.user,text:p.caption,url:p.image}).catch(()=>{});else toast('SHARE IS NOT AVAILABLE')};
-  el.querySelector('.save-post').onclick=()=>toast('POST SAVED');
-  el.querySelector('.post-more').onclick=()=>toast('POST OPTIONS');
   host.append(el);
  });
- if(!rows.length)host.innerHTML='<div class="empty-state"><span>⌕</span><h2>No posts found</h2><p>Try another name, place or hashtag.</p></div>';
+ if(!rows.length)host.innerHTML='<div class="empty-state"><h2>No posts found</h2><p>Try another name, place or hashtag.</p></div>';
 }
 $('#feedSearch')?.addEventListener('input',e=>renderFeed(e.target.value));
 $('#feedSearchClear')?.addEventListener('click',()=>{$('#feedSearch').value='';renderFeed()});
