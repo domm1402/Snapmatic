@@ -189,3 +189,16 @@ $('#commentForm').onsubmit=e=>{
 };
 $('#feedCamera').onclick=()=>startCamera();
 renderFeed();
+
+// The Android build bundles Rockstar's official screenshot archive for offline feed images.
+async function loadBundledGtaGallery(){
+ try{
+  const response=await fetch('./assets/gta-official/manifest.json');
+  if(!response.ok)return;
+  const files=await response.json();
+  if(!Array.isArray(files)||!files.length)return;
+  GTA_POSTS.forEach((post,index)=>{post.image='./'+files[index%files.length]});
+  renderFeed();
+ }catch(error){console.warn('Bundled GTA gallery unavailable',error)}
+}
+loadBundledGtaGallery();
