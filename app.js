@@ -16,7 +16,7 @@ function switchCamera(){facing=facing==='environment'?'user':'environment';start
 function updateClock(){const now=new Date();$('#statusTime').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});$('#clockLabel').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
 function renderGallery(){const grid=$('#galleryGrid');grid.innerHTML='';let list=[...photos].sort((a,b)=>newest?b.created-a.created:a.created-b.created);if(activeGallery==='favourites')list=list.filter(p=>p.liked);$('#photoCount').textContent=list.length+' PHOTOS';if(!list.length){grid.innerHTML='<div class="empty-state"><span>▧</span><h2>No photos here yet</h2><p>Take a picture or import one from your device to start your Snapmatic collection.</p></div>';return}list.forEach(p=>{const tile=document.createElement('button');tile.className='photo-tile';tile.innerHTML='<img alt="Snapmatic photo"><span class="tile-meta"></span>'+(p.liked?'<b class="fav-mark">♥</b>':'');tile.querySelector('img').src=p.data;tile.querySelector('.tile-meta').textContent=p.date+' · '+(p.location||'LOS SANTOS');tile.onclick=()=>openPhoto(p.id);grid.append(tile)})}
 function renderProfile(){$('#statPhotos').textContent=photos.length;$('#statLikes').textContent=photos.filter(p=>p.liked).length;$('.profile-avatar').textContent=profileName;$('#profileOpen').textContent=profileName}
-function persistPhoto(photo){photos.unshift(photo);if(!saveLibrary()){photos.shift();return}renderGallery();renderProfile();toast('PHOTO SAVED TO MY PHOTOS')}
+function persistPhoto(photo){photos.unshift(photo);if(!saveLibrary()){photos.shift();return}renderGallery();renderProfile();renderFeed();toast('POST ADDED TO YOUR FEED')}
 function makePhoto(data){const now=new Date();return{id:crypto.randomUUID(),data,created:Date.now(),date:now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),look:activeLook,caption:'',location:prefs.stamp?'Los Santos, San Andreas':'',liked:false}}
 function canvasShot(){const v=$('#video');if(!stream||!v.videoWidth){toast('Camera is not ready');return}let w=v.videoWidth,h=v.videoHeight;const ratio=prefs.ratio;if(ratio==='1:1'){const side=Math.min(w,h);w=side;h=side}else if(ratio==='16:9'){if(w/h>16/9)w=Math.round(h*16/9);else h=Math.round(w*9/16)}else{if(w/h>4/3)w=Math.round(h*4/3);else h=Math.round(w*3/4)}const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.filter=looks[activeLook]||'none';if(facing==='user'){ctx.translate(w,0);ctx.scale(-1,1)}ctx.drawImage(v,(v.videoWidth-w)/2,(v.videoHeight-h)/2,w,h,0,0,w,h);const photo=makePhoto(c.toDataURL('image/jpeg',Number(prefs.quality)));persistPhoto(photo);$('#lastShot').dataset.id=photo.id}
 function takePhoto(){if(timerMode){const delay=timerMode;toast('SELF TIMER · '+delay+' SECONDS');$('#cameraHint').textContent='GET READY…';timerHandle=setTimeout(()=>{canvasShot();$('#cameraHint').textContent='READY'},delay*1000)}else canvasShot()}
@@ -27,7 +27,7 @@ function applyEditPreview(){const p=currentPhoto();if(!p)return;$('#editImage').
 function openEditor(){const p=currentPhoto();if(!p)return;closeModals();$('#editImage').src=p.data;$('#captionInput').value=p.caption||'';$('#locationInput').value=p.location||'';activeLook=p.look||'original';$$('[data-edit-look]').forEach(b=>b.classList.toggle('active',b.dataset.editLook===activeLook));$('#brightness').value=100;$('#contrast').value=100;$('#saturation').value=100;applyEditPreview();openModal('editModal')}
 function saveEdit(){const p=currentPhoto();if(!p)return;const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const ctx=c.getContext('2d');ctx.filter=(looks[activeLook]||'none')+' brightness('+$('#brightness').value+'%) contrast('+$('#contrast').value+'%) saturate('+$('#saturation').value+'%)';ctx.drawImage(img,0,0);p.data=c.toDataURL('image/jpeg',.92);p.look=activeLook;p.caption=$('#captionInput').value.trim();p.location=$('#locationInput').value.trim();if(saveLibrary()){closeModals();renderGallery();openPhoto(p.id);toast('PHOTO UPDATED')}};img.src=p.data}
 async function sharePhoto(){const p=currentPhoto();if(!p)return;try{const blob=await(await fetch(p.data)).blob(),file=new File([blob],'snapmatic-photo.jpg',{type:'image/jpeg'});if(navigator.share&&navigator.canShare?.({files:[file]}))await navigator.share({files:[file],title:'Snapmatic photo',text:p.caption});else{const a=document.createElement('a');a.href=p.data;a.download='snapmatic-photo.jpg';a.click();toast('PHOTO EXPORTED')}}catch(e){if(e.name!=='AbortError')toast('Could not share photo')}}
-function deletePhoto(){if(!currentPhoto()||!confirm('Delete this photo permanently?'))return;photos=photos.filter(p=>p.id!==activeId);saveLibrary();closeModals();renderGallery();renderProfile();toast('PHOTO DELETED')}
+function deletePhoto(){if(!currentPhoto()||!confirm('Delete this photo permanently?'))return;photos=photos.filter(p=>p.id!==activeId);saveLibrary();closeModals();renderGallery();renderProfile();renderFeed();toast('PHOTO DELETED')}
 function exportAll(){if(!photos.length){toast('NO PHOTOS TO EXPORT');return}photos.forEach((p,i)=>{const a=document.createElement('a');a.href=p.data;a.download='snapmatic-'+(i+1)+'.jpg';a.click()});toast('EXPORTING '+photos.length+' PHOTOS')}
 function savePrefs(){prefs={ratio:$('#ratioSelect').value,quality:$('#qualitySelect').value,grid:$('#gridToggle').checked,stamp:$('#locationToggle').checked};localStorage.setItem(PREF,JSON.stringify(prefs));$('#gridLines').classList.toggle('show',prefs.grid);closeModals();toast('CAMERA SETTINGS SAVED')}
 $('[data-screen]').forEach(b=>b.addEventListener('click',()=>{if(b.getAttribute('aria-label')==='Likes'){activeGallery='favourites';$('[data-gallery]').forEach(x=>x.classList.toggle('selected',x.dataset.gallery==='favourites'));}else if(b.dataset.screen==='gallery'){activeGallery='all';$('[data-gallery]').forEach(x=>x.classList.toggle('selected',x.dataset.gallery==='all'));}screen(b.dataset.screen);if(b.dataset.screen==='camera')startCamera()}));
@@ -38,33 +38,58 @@ $('#flashBtn').onclick=async()=>{flashMode=(flashMode+1)%3;const track=stream?.g
 $('#gridBtn').onclick=()=>{$('#gridLines').classList.toggle('show');$('#gridBtn').classList.toggle('active')};$('#settingsOpen').onclick=()=>{ $('#ratioSelect').value=prefs.ratio;$('#qualitySelect').value=prefs.quality;$('#gridToggle').checked=prefs.grid;$('#locationToggle').checked=prefs.stamp;openModal('settingsModal')};$('#savePrefs').onclick=savePrefs;$('#ratioSelect').onchange=()=>{};$('#settingsModal').querySelectorAll('select,input').forEach(x=>x.addEventListener('change',()=>{prefs.ratio=$('#ratioSelect').value}));
 $$('[data-close]').forEach(b=>b.onclick=closeModals);$('#detailDone').onclick=closeModals;$('#editOpen').onclick=openEditor;$('#saveEdit').onclick=saveEdit;$('#sharePhoto').onclick=sharePhoto;$('#deletePhoto').onclick=deletePhoto;$('#likePhoto').onclick=()=>{const p=currentPhoto();if(!p)return;p.liked=!p.liked;saveLibrary();openPhoto(p.id);renderProfile();toast(p.liked?'ADDED TO FAVOURITES':'REMOVED FROM FAVOURITES')};
 $$('[data-gallery]').forEach(b=>b.onclick=()=>{activeGallery=b.dataset.gallery;$$('[data-gallery]').forEach(x=>x.classList.toggle('selected',x===b));renderGallery()});$('#sortBtn').onclick=()=>{newest=!newest;$('#sortBtn').textContent=newest?'NEWEST FIRST ↓':'OLDEST FIRST ↑';renderGallery()};
-$('#exportAll').onclick=exportAll;$('#clearAll').onclick=()=>{if(!photos.length){toast('LIBRARY IS ALREADY EMPTY');return}if(confirm('Delete every photo in your Snapmatic library?')){photos=[];saveLibrary();renderGallery();renderProfile();toast('LIBRARY CLEARED')}};
-$('#editProfile').onclick=()=>{ $('#displayName').value=profileName;openModal('captionModal')};$('#saveProfile').onclick=()=>{profileName=$('#displayName').value.trim()||'DM';localStorage.setItem('snapmatic-name',profileName);renderProfile();closeModals();toast('PROFILE UPDATED')};
+$('#exportAll').onclick=exportAll;$('#clearAll').onclick=()=>{if(!photos.length){toast('LIBRARY IS ALREADY EMPTY');return}if(confirm('Delete every photo in your Snapmatic library?')){photos=[];saveLibrary();renderGallery();renderProfile();renderFeed();toast('LIBRARY CLEARED')}};
+$('#editProfile').onclick=()=>{ $('#displayName').value=profileName;openModal('captionModal')};$('#saveProfile').onclick=()=>{profileName=$('#displayName').value.trim()||'DM';localStorage.setItem('snapmatic-name',profileName);renderProfile();renderFeed();closeModals();toast('PROFILE UPDATED')};
 $('#gridLines').classList.toggle('show',prefs.grid);updateClock();setInterval(updateClock,15000);renderGallery();renderProfile();$('#ratioSelect').value=prefs.ratio;$('#qualitySelect').value=prefs.quality;$('#gridToggle').checked=prefs.grid;$('#locationToggle').checked=prefs.stamp;
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
-const feedItems = [
-{id:'p1',user:'vice.views',place:'OCEAN DRIVE · VICE CITY',avatar:'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1100&q=85',likes:2481,caption:'Last light over the city. This place never sleeps. #ViceCity #AfterHours',comments:86,time:'12 MIN AGO'},
-{id:'p2',user:'jason.d',place:'LEONIDA KEYS',avatar:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1100&q=85',likes:1904,caption:'Took the long way home. Would do it again.',comments:43,time:'38 MIN AGO'},
-{id:'p3',user:'coast2coast',place:'SOUTH BEACH',avatar:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1100&q=85',likes:864,caption:'Blue hour hits different out here. #Coastline',comments:21,time:'1 HOUR AGO'},
-{id:'p4',user:'nightshift.305',place:'DOWNTOWN VICE CITY',avatar:'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1100&q=85',likes:3210,caption:'No plans. No rush. Just keep driving.',comments:107,time:'2 HOURS AGO'}
-];
-let likedFeed = JSON.parse(localStorage.getItem('snapmatic-feed-likes') || '[]');
-function renderFeed(query='') {
- const host=$('#feedPosts'); if(!host)return; host.innerHTML='';
- const q=query.trim().toLowerCase();
- const rows=feedItems.filter(p=>(p.user+' '+p.place+' '+p.caption).toLowerCase().includes(q));
+
+let commentPhotoId=null;
+function renderFeed(){
+ const host=$('#feedPosts'); if(!host)return;
+ host.innerHTML='';
+ const rows=[...photos].sort((a,b)=>b.created-a.created);
+ if(!rows.length){
+  const empty=document.createElement('div');empty.className='feed-empty';
+  const title=document.createElement('h2');title.textContent='Your feed starts here';
+  const copy=document.createElement('p');copy.textContent='Take a photo or import one. It will appear here as your first Snapmatic post.';
+  const action=document.createElement('button');action.className='yellow-btn';action.textContent='CREATE YOUR FIRST POST';action.onclick=()=>startCamera();
+  empty.append(title,copy,action);host.append(empty);return;
+ }
  rows.forEach(p=>{
-  const liked=likedFeed.includes(p.id),el=document.createElement('article');el.className='feed-post';
-  el.innerHTML='<img class="post-image" alt="Photo from '+p.place+'" src="'+p.image+'"><div class="post-content"><div class="post-userline"><img class="post-avatar" alt="" src="'+p.avatar+'"><b>'+p.user+'</b></div><div class="post-caption">'+p.caption+'</div><div class="post-actions"><button class="like-feed '+(liked?'liked':'')+'" aria-label="Like">'+(liked?'♥':'♡')+'</button><span class="post-count">'+(p.likes+(liked?1:0)).toLocaleString()+'</span><button class="comment-feed" aria-label="Comments">▢</button><span class="post-count">'+p.comments+'</span></div></div>';
-  el.querySelector('.like-feed').onclick=()=>{likedFeed=likedFeed.includes(p.id)?likedFeed.filter(x=>x!==p.id):likedFeed.concat(p.id);localStorage.setItem('snapmatic-feed-likes',JSON.stringify(likedFeed));renderFeed($('#feedSearch')?.value||'')};
-  el.querySelector('.comment-feed').onclick=()=>toast('COMMENTS · '+p.comments+' ON THIS POST');
-  host.append(el);
+  const post=document.createElement('article');post.className='feed-post';
+  const image=document.createElement('img');image.className='post-image';image.alt='Your Snapmatic post';image.src=p.data;image.onclick=()=>openPhoto(p.id);
+  const content=document.createElement('div');content.className='post-content';
+  const userline=document.createElement('div');userline.className='post-userline';
+  const avatar=document.createElement('span');avatar.className='post-avatar initials';avatar.textContent=profileName.slice(0,2).toUpperCase();
+  const username=document.createElement('b');username.textContent='@'+profileName;
+  userline.append(avatar,username);
+  const caption=document.createElement('p');caption.className='post-caption';caption.textContent=p.caption||'';
+  if(!p.caption)caption.classList.add('caption-empty');
+  const actions=document.createElement('div');actions.className='post-actions';
+  const like=document.createElement('button');like.className='like-feed'+(p.liked?' liked':'');like.setAttribute('aria-label',p.liked?'Unlike post':'Like post');like.textContent=p.liked?'♥':'♡';
+  const likes=document.createElement('span');likes.className='post-count';likes.textContent=p.liked?'1':'0';
+  const comment=document.createElement('button');comment.className='comment-feed';comment.setAttribute('aria-label','Comments');comment.textContent='▢';
+  const comments=document.createElement('span');comments.className='post-count';comments.textContent=String((p.comments||[]).length);
+  like.onclick=()=>{p.liked=!p.liked;if(saveLibrary()){renderFeed();renderGallery();renderProfile()}};
+  comment.onclick=()=>openComments(p.id);
+  actions.append(like,likes,comment,comments);
+  const timestamp=document.createElement('div');timestamp.className='post-time';timestamp.textContent=(p.date||'')+' · '+(p.time||'');
+  content.append(userline,caption,actions,timestamp);post.append(image,content);host.append(post);
  });
- if(!rows.length)host.innerHTML='<div class="empty-state"><h2>No posts found</h2><p>Try another name, place or hashtag.</p></div>';
 }
-$('#feedSearch')?.addEventListener('input',e=>renderFeed(e.target.value));
-$('#feedSearchClear')?.addEventListener('click',()=>{$('#feedSearch').value='';renderFeed()});
-$('#feedSort')?.addEventListener('click',()=>toast('SHOWING THE LATEST POSTS FOR YOU'));
-$$('.story:not(.add-story)').forEach(b=>b.onclick=()=>toast('STORY · '+b.querySelector('small').textContent));
+function openComments(id){
+ commentPhotoId=id;const p=photos.find(x=>x.id===id);if(!p)return;
+ const list=$('#commentsList');list.innerHTML='';
+ const comments=p.comments||[];
+ if(!comments.length){const empty=document.createElement('p');empty.className='no-comments';empty.textContent='No comments yet. Start the conversation.';list.append(empty)}
+ comments.forEach(c=>{const item=document.createElement('div');item.className='comment-item';const name=document.createElement('b');name.textContent=c.name||profileName;const body=document.createElement('p');body.textContent=c.text;item.append(name,body);list.append(item)});
+ openModal('commentsModal');
+}
+$('#commentForm').onsubmit=e=>{
+ e.preventDefault();const p=photos.find(x=>x.id===commentPhotoId),input=$('#commentInput'),value=input.value.trim();if(!p||!value)return;
+ p.comments=p.comments||[];p.comments.push({name:profileName,text:value,created:Date.now()});
+ if(saveLibrary()){input.value='';openComments(p.id);renderFeed();toast('COMMENT ADDED')}
+};
+$('#feedCamera').onclick=()=>startCamera();
 renderFeed();
