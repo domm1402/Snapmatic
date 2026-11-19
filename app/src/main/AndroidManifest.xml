@@ -5,6 +5,7 @@
     <application
         android:allowBackup="true"
         android:label="Snapmatic"
+        android:icon="@drawable/ic_snapmatic"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="false">
         <activity
