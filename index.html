@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#11110f"><meta name="description" content="Snapmatic-inspired mobile photo studio">
+<link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="style.css">
+<title>Snapmatic</title>
+</head>
+<body>
+<div class="app-shell">
+<header class="topbar"><div class="brand"><span class="brand-mark">S</span><div><strong>SNAPMATIC</strong><small>LOS SANTOS PHOTO NETWORK</small></div></div><button id="profileBtn" class="avatar" aria-label="Profile">DM</button></header>
+<main>
+<section class="screen active" id="homeScreen">
+<div class="welcome"><div><p class="eyebrow">WEDNESDAY · LOS SANTOS</p><h1>Your life.<br><em>In the frame.</em></h1></div><span class="online"><i></i> ONLINE</span></div>
+<div class="camera-card"><div class="camera-copy"><span class="eyebrow">READY WHEN YOU ARE</span><h2>Make a moment.</h2><p>Capture the streets, the sunsets, the chaos.</p><button class="primary" id="openCamera">OPEN CAMERA <b>↗</b></button></div><div class="camera-art"><div class="sun"></div><div class="city city-back"></div><div class="city city-front"></div><div class="road"></div><span class="art-label">VINEWOOD / 04:37 PM</span></div></div>
+<div class="section-head"><div><span class="eyebrow">YOUR ROLL</span><h2>Recent shots</h2></div><button class="text-btn" data-tab="gallery">VIEW ALL ↗</button></div>
+<div class="photo-grid compact" id="recentGrid"><div class="empty-tile"><span>＋</span><p>Your first shot<br>starts here</p></div></div>
+</section>
+<section class="screen" id="cameraScreen"><div class="screen-head"><button class="back" data-tab="home">←</button><div><span class="eyebrow">SNAPMATIC CAMERA</span><h2>Find your angle.</h2></div><span class="live-pill">● LIVE</span></div><div class="viewfinder"><video id="video" autoplay playsinline muted></video><img id="preview" alt="Photo preview"><div class="viewfinder-hud"><span>REC ●</span><span id="cameraTime">16:42</span><span>WIDE · AUTO</span></div><div class="focus-reticle"></div><div class="camera-hint" id="cameraHint">Tap allow to use your camera</div></div><div class="camera-controls"><button id="flipCamera" class="round-control">↻</button><button id="shutter" class="shutter"><span></span></button><button id="uploadBtn" class="round-control">▧</button></div><div class="camera-options"><button class="selected" data-filter="none">NORMAL</button><button data-filter="warm">SUNSET</button><button data-filter="mono">B&amp;W</button><button data-filter="vivid">VIVID</button></div><input type="file" id="fileInput" accept="image/*" hidden></section>
+<section class="screen" id="galleryScreen"><div class="screen-head"><div><span class="eyebrow">PERSONAL ARCHIVE</span><h2>Your gallery</h2></div><button class="primary small" id="galleryCamera">＋ SHOT</button></div><div class="gallery-tools"><span id="photoCount">0 PHOTOS</span><button id="sortBtn">NEWEST ↓</button></div><div class="photo-grid" id="galleryGrid"><div class="empty-state"><div>▧</div><h3>Nothing in the frame yet.</h3><p>Take a photo or import one to start your collection.</p><button class="primary" id="emptyCamera">OPEN CAMERA ↗</button></div></div></section>
+<section class="screen" id="editScreen"><div class="screen-head"><button class="back" data-tab="gallery">←</button><div><span class="eyebrow">DARKROOM</span><h2>Develop your shot.</h2></div><button class="text-btn" id="saveEdit">SAVE ↗</button></div><div class="edit-preview"><img id="editImage" alt="Selected photo"></div><div class="edit-panel"><div class="section-head"><div><span class="eyebrow">LOOKS</span><h3>Choose a mood</h3></div></div><div class="filter-row"><button data-edit-filter="none" class="filter-chip selected">Original</button><button data-edit-filter="warm" class="filter-chip">Sunset</button><button data-edit-filter="mono" class="filter-chip">Noir</button><button data-edit-filter="vivid" class="filter-chip">Vivid</button><button data-edit-filter="fade" class="filter-chip">Vintage</button></div><label class="range-label">BRIGHTNESS <input type="range" id="brightness" min="60" max="150" value="100"></label><label class="range-label">CONTRAST <input type="range" id="contrast" min="60" max="150" value="100"></label><div class="edit-actions"><button class="secondary" id="deletePhoto">DELETE</button><button class="primary" id="sharePhoto">SHARE PHOTO ↗</button></div></div></section>
+<section class="screen" id="profileScreen"><div class="profile-hero"><div class="profile-avatar">DM</div><span class="eyebrow">LOS SANTOS RESIDENT</span><h2>Street photographer.</h2><p>Your city. Your perspective.</p></div><div class="stats"><div><strong id="statPhotos">0</strong><span>PHOTOS</span></div><div><strong>LS</strong><span>LOCATION</span></div><div><strong>01</strong><span>MEMBER</span></div></div><div class="settings-list"><button id="exportAll">EXPORT PHOTO ARCHIVE <span>↗</span></button><button id="aboutBtn">ABOUT SNAPMATIC <span>↗</span></button><p>SNAPMATIC · LOS SANTOS PHOTO NETWORK<br>AN INDEPENDENT FAN-MADE CONCEPT</p></div></section>
+</main>
+<nav class="bottom-nav"><button class="nav-item active" data-tab="home"><span>⌂</span>HOME</button><button class="nav-item" data-tab="gallery"><span>▦</span>GALLERY</button><button class="nav-capture" id="navCapture"><span>＋</span></button><button class="nav-item" data-tab="profile"><span>◉</span>PROFILE</button></nav>
+<div class="toast" id="toast"></div>
+</div>
+<script src="app.js"></script>
+</body></html>
