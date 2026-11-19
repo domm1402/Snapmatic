@@ -1,1 +1,19 @@
-{"name":"Snapmatic","short_name":"Snapmatic","start_url":"./","display":"standalone","background_color":"#11110f","theme_color":"#11110f","description":"A mobile street photography studio inspired by the in-game Snapmatic experience","icons":[]}
+{
+  "name": "Snapmatic",
+  "short_name": "Snapmatic",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#11110f",
+  "theme_color": "#11110f",
+  "description": "A Vice City-inspired social photo feed and mobile camera.",
+  "icons": [
+    {
+      "src": "assets/snapmatic-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
