@@ -59,3 +59,10 @@
 .comment-form{display:flex;gap:8px;padding:12px;border-top:1px solid #eee}
 .comment-form input{min-width:0;flex:1;border:1px solid #ddd;padding:11px;font:13px 'DM Sans'}
 .comment-form .yellow-btn{padding:0 15px}
+
+/* Mixed GTA community and private phone posts */
+#feedScreen .feed-post.gta-post .post-avatar{background:#f1e5d7;color:#8a4c32}
+#feedScreen .feed-post.local-post{border-left:3px solid #d5c65a}
+#feedScreen .feed-compose{position:sticky;top:0;z-index:3}
+#feedScreen .feed-compose b{font-size:12px;letter-spacing:.8px}
+#feedScreen .feed-compose small{font-size:10px}
