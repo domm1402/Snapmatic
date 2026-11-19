@@ -1,6 +1,11 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const STORE='snapmatic-library-v2',PREF='snapmatic-prefs-v2';
 let photos=loadPhotos(),stream=null,facing='environment',activeLook='original',activeId=null,activeGallery='all',newest=true,timerMode=0,timerHandle=null,flashMode=0,profileName=localStorage.getItem('snapmatic-name')||'DM';
+let profileUsername=localStorage.getItem('snapmatic-username')||'DM';
+let profileBio=localStorage.getItem('snapmatic-bio')||'Living life one frame at a time.';
+let profileLocation=localStorage.getItem('snapmatic-location')||'Vice City, Leonida';
+let profileAvatar=localStorage.getItem('snapmatic-avatar')||'';
+let feedPage=0,feedSearchText='',feedFilterMode='all';
 let prefs={ratio:'4:3',quality:'0.92',grid:true,stamp:true,...JSON.parse(localStorage.getItem(PREF)||'{}')};
 const looks={original:'none',golden:'sepia(.22) saturate(1.35) contrast(1.06) brightness(1.04)',noir:'grayscale(1) contrast(1.22) brightness(.94)',vice:'hue-rotate(315deg) saturate(1.4) contrast(1.05)',retro:'sepia(.42) saturate(.82) contrast(.92) brightness(1.06)',chrome:'saturate(.72) contrast(1.25) brightness(1.02)'};
 function loadPhotos(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch{return []}}
@@ -15,7 +20,19 @@ function setLook(name){activeLook=name;$$('[data-look]').forEach(b=>b.classList.
 function switchCamera(){facing=facing==='environment'?'user':'environment';startCamera()}
 function updateClock(){const now=new Date();$('#statusTime').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});$('#clockLabel').textContent=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
 function renderGallery(){const grid=$('#galleryGrid');grid.innerHTML='';let list=[...photos].sort((a,b)=>newest?b.created-a.created:a.created-b.created);if(activeGallery==='favourites')list=list.filter(p=>p.liked);$('#photoCount').textContent=list.length+' PHOTOS';if(!list.length){grid.innerHTML='<div class="empty-state"><span>▧</span><h2>No photos here yet</h2><p>Take a picture or import one from your device to start your Snapmatic collection.</p></div>';return}list.forEach(p=>{const tile=document.createElement('button');tile.className='photo-tile';tile.innerHTML='<img alt="Snapmatic photo"><span class="tile-meta"></span>'+(p.liked?'<b class="fav-mark">♥</b>':'');tile.querySelector('img').src=p.data;tile.querySelector('.tile-meta').textContent=p.date+' · '+(p.location||'LOS SANTOS');tile.onclick=()=>openPhoto(p.id);grid.append(tile)})}
-function renderProfile(){$('#statPhotos').textContent=photos.length;$('#statLikes').textContent=photos.filter(p=>p.liked).length;$('.profile-avatar').textContent=profileName;$('#profileOpen').textContent=profileName}
+function renderProfile(){
+ $('#statPhotos').textContent=photos.length;
+ $('#statLikes').textContent=photos.filter(p=>p.liked).length;
+ $('#statGtaPosts').textContent='1.2K';
+ $('#profileDisplayName').textContent=profileName;
+ $('#profileHandle').textContent='@'+profileUsername.replace(/^@/,'')+' · '+profileLocation.toUpperCase();
+ $('#profileBio').textContent=profileBio;
+ const av=$('#profileAvatarButton');av.textContent=profileAvatar?'':profileName.slice(0,2).toUpperCase();av.style.backgroundImage=profileAvatar?'url('+profileAvatar+')':'';
+ $('#profileOpen').textContent=profileName.slice(0,2).toUpperCase();
+ const grid=$('#profilePhotoGrid');grid.innerHTML='';
+ if(!photos.length){const empty=document.createElement('div');empty.className='profile-empty';empty.textContent='Your photos will appear here.';grid.append(empty)}
+ photos.slice().sort((a,b)=>b.created-a.created).forEach(p=>{const b=document.createElement('button');b.className='profile-photo-tile';const im=document.createElement('img');im.src=p.data;im.loading='lazy';im.alt='Your photo';b.append(im);b.onclick=()=>openPhoto(p.id);grid.append(b)});
+}
 function persistPhoto(photo){photos.unshift(photo);if(!saveLibrary()){photos.shift();return}renderGallery();renderProfile();renderFeed();toast('POST ADDED TO YOUR FEED')}
 function makePhoto(data){const now=new Date();return{id:crypto.randomUUID(),data,created:Date.now(),date:now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}),time:now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),look:activeLook,caption:'',location:prefs.stamp?'Los Santos, San Andreas':'',liked:false}}
 function canvasShot(){const v=$('#video');if(!stream||!v.videoWidth){toast('Camera is not ready');return}let w=v.videoWidth,h=v.videoHeight;const ratio=prefs.ratio;if(ratio==='1:1'){const side=Math.min(w,h);w=side;h=side}else if(ratio==='16:9'){if(w/h>16/9)w=Math.round(h*16/9);else h=Math.round(w*9/16)}else{if(w/h>4/3)w=Math.round(h*4/3);else h=Math.round(w*3/4)}const c=document.createElement('canvas');c.width=w;c.height=h;const ctx=c.getContext('2d');ctx.filter=looks[activeLook]||'none';if(facing==='user'){ctx.translate(w,0);ctx.scale(-1,1)}ctx.drawImage(v,(v.videoWidth-w)/2,(v.videoHeight-h)/2,w,h,0,0,w,h);const photo=makePhoto(c.toDataURL('image/jpeg',Number(prefs.quality)));persistPhoto(photo);$('#lastShot').dataset.id=photo.id}
@@ -39,13 +56,18 @@ $('#gridBtn').onclick=()=>{$('#gridLines').classList.toggle('show');$('#gridBtn'
 $$('[data-close]').forEach(b=>b.onclick=closeModals);$('#detailDone').onclick=closeModals;$('#editOpen').onclick=openEditor;$('#saveEdit').onclick=saveEdit;$('#sharePhoto').onclick=sharePhoto;$('#deletePhoto').onclick=deletePhoto;$('#likePhoto').onclick=()=>{const p=currentPhoto();if(!p)return;p.liked=!p.liked;saveLibrary();openPhoto(p.id);renderProfile();renderFeed();toast(p.liked?'ADDED TO FAVOURITES':'REMOVED FROM FAVOURITES')};
 $$('[data-gallery]').forEach(b=>b.onclick=()=>{activeGallery=b.dataset.gallery;$$('[data-gallery]').forEach(x=>x.classList.toggle('selected',x===b));renderGallery()});$('#sortBtn').onclick=()=>{newest=!newest;$('#sortBtn').textContent=newest?'NEWEST FIRST ↓':'OLDEST FIRST ↑';renderGallery()};
 $('#exportAll').onclick=exportAll;$('#clearAll').onclick=()=>{if(!photos.length){toast('LIBRARY IS ALREADY EMPTY');return}if(confirm('Delete every photo in your Snapmatic library?')){photos=[];saveLibrary();renderGallery();renderProfile();renderFeed();toast('LIBRARY CLEARED')}};
-$('#editProfile').onclick=()=>{ $('#displayName').value=profileName;openModal('captionModal')};$('#saveProfile').onclick=()=>{profileName=$('#displayName').value.trim()||'DM';localStorage.setItem('snapmatic-name',profileName);renderProfile();renderFeed();closeModals();toast('PROFILE UPDATED')};
+$('#editProfile').onclick=()=>{ $('#displayName').value=profileName;$('#profileUsername').value=profileUsername;$('#profileBioInput').value=profileBio;$('#profileLocationInput').value=profileLocation;openModal('captionModal')};$('#saveProfile').onclick=()=>{profileName=$('#displayName').value.trim()||'DM';profileUsername=$('#profileUsername').value.trim().replace(/^@/,'')||profileName;profileBio=$('#profileBioInput').value.trim();profileLocation=$('#profileLocationInput').value.trim()||'Vice City, Leonida';localStorage.setItem('snapmatic-name',profileName);localStorage.setItem('snapmatic-username',profileUsername);localStorage.setItem('snapmatic-bio',profileBio);localStorage.setItem('snapmatic-location',profileLocation);renderProfile();renderFeed();closeModals();toast('PROFILE UPDATED')};
+$('#profileAvatarButton').onclick=()=>$('#avatarInput').click();
+$('#avatarInput').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=256;c.height=256;const x=c.getContext('2d');const side=Math.min(im.width,im.height);x.drawImage(im,(im.width-side)/2,(im.height-side)/2,side,side,0,0,256,256);profileAvatar=c.toDataURL('image/jpeg',.82);try{localStorage.setItem('snapmatic-avatar',profileAvatar);renderProfile();toast('PROFILE PHOTO UPDATED')}catch{toast('Photo too large. Choose a smaller image.')}};im.src=rd.result};rd.readAsDataURL(f);e.target.value=''};
+$('#feedSearch').oninput=e=>{feedSearchText=e.target.value.trim();renderFeed()};
+$('#feedFilter').onchange=e=>{feedFilterMode=e.target.value;renderFeed()};
+$('#loadMorePosts').onclick=()=>renderFeed(false);
 $('#gridLines').classList.toggle('show',prefs.grid);updateClock();setInterval(updateClock,15000);renderGallery();renderProfile();$('#ratioSelect').value=prefs.ratio;$('#qualitySelect').value=prefs.quality;$('#gridToggle').checked=prefs.grid;$('#locationToggle').checked=prefs.stamp;
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 
 
 
-const GTA_POSTS = [
+const GTA_POST_SOURCES = [
  {id:'gta-01',user:'vicecitydaily',place:'VICE CITY',image:'https://www.gta6everything.com/images/official/gta-6-jason-and-lucia-dancing-nightclub-lasers.jpg',caption:"Vice City after hours. #ViceCity #AfterDark",likes:850,comments:358,time:'7 MIN AGO'},
  {id:'gta-02',user:'leonida_unfiltered',place:'VICE CITY',image:'https://www.gta6everything.com/images/official/gta-6-jason-and-lucia-fleeca-bank-robbery.jpg',caption:"Some nights do not go to plan. #Leonida",likes:2929,comments:303,time:'19 MIN AGO'},
  {id:'gta-03',user:'sunsetstate',place:'GRASSRIVERS',image:'https://www.gta6everything.com/images/official/gta-6-jason-and-lucia-pickup-hilltop-sunset-deer.jpg',caption:"Out where the city noise fades. #LeonidaKeys",likes:4872,comments:158,time:'31 MIN AGO'},
@@ -81,17 +103,50 @@ const GTA_POSTS = [
  {id:'gta-33',user:'dockside_daily',place:'LEONIDA KEYS',image:'https://www.gta6everything.com/images/official/gta-6-leonida-keys-rusty-anchor.jpg',caption:"Meet you at the dock. #RustyAnchor",likes:8553,comments:315,time:'10 HOURS AGO'},
  {id:'gta-34',user:'boatlifefl',place:'LEONIDA KEYS',image:'https://www.gta6everything.com/images/official/gta-6-leonida-keys-boat-party.jpg',caption:"Out on the water. #LeonidaKeys",likes:7588,comments:357,time:'11 HOURS AGO'}
 ];
+const GTA_POSTS = (() => {
+ const captions=[
+  "Vice City never sleeps. #ViceCity","Caught this on the way home. #Leonida",
+  "Another day in paradise. #Florida","This place is unreal. #Snapmatic",
+  "Who else was out tonight? #ViceCityNights","The weather is looking perfect. #LeonidaLife",
+  "Just cruising around. #305","The view from here. #ViceCity",
+  "You had to be there. #OnlyInLeonida","Weekend plans sorted. #ViceCity",
+  "Found a new favourite spot. #ExploreLeonida","That sunset though. #GoldenHour",
+  "The streets have stories. #StreetLife","Rate this view. #Snapmatic",
+  "Nothing beats the coast. #LeonidaKeys","Late night run. #AfterDark"
+ ];
+ const names=["vicecitydaily","305afterdark","leonidaviews","coast2coast","vicecitywire","sunsetstate","keyscruiser","neon305","portside305","streetspotted","swampwatch","marinaviews","lowandslow","vicevibes","leonidatoday","beachside305","nightowl305","citylines","rustyanchor","luciacaptures","highabove305","duskdrive"];
+ const places=["VICE CITY","LEONIDA KEYS","PORT GELLHORN","GRASSRIVERS","VICE BEACH","AMBROSIA"];
+ const list=[];
+ for(let i=0;i<1200;i++){
+  const src=GTA_POST_SOURCES[i%GTA_POST_SOURCES.length];
+  const n=i+1;
+  list.push({...src,id:'gta-'+String(n).padStart(4,'0'),
+   user:n<35?src.user:names[(i*7+Math.floor(i/13))%names.length],
+   place:places[(i*5+Math.floor(i/9))%places.length],
+   caption:n<35?src.caption:captions[(i*11+Math.floor(i/5))%captions.length],
+   likes:Math.max(8,src.likes+((i*137)%9400)),
+   comments:Math.max(1,src.comments+((i*17)%380)),
+   time:n<35?src.time:(Math.floor(i/60)+1)+' HOURS AGO'
+  });
+ }
+ return list;
+})();
+
 let likedGta = JSON.parse(localStorage.getItem('snapmatic-gta-likes') || '[]');
 let gtaComments = JSON.parse(localStorage.getItem('snapmatic-gta-comments') || '{}');
 let commentTarget=null;
-function renderFeed(){
- const host=$('#feedPosts'); if(!host)return;
- host.innerHTML='';
- const items=[
-  ...GTA_POSTS.map(p=>({...p,type:'gta'})),
-  ...[...photos].sort((a,b)=>b.created-a.created).map(p=>({...p,id:'local-'+p.id,type:'local',photoId:p.id,user:profileName,place:p.location||'MY PHOTOS',image:p.data,likes:p.liked?1:0,comments:(p.comments||[]).length,time:p.date+' · '+p.time}))
- ];
- items.forEach(p=>{
+function renderFeed(reset=true){
+ const host=$('#feedPosts');if(!host)return;
+ if(reset){feedPage=0;host.innerHTML=''}
+ const own=[...photos].sort((a,b)=>b.created-a.created).map(p=>({...p,id:'local-'+p.id,type:'local',photoId:p.id,user:profileUsername,place:p.location||'MY PHOTOS',image:p.data,likes:p.liked?1:0,comments:(p.comments||[]).length,time:p.date+' · '+p.time}));
+ let items=[...GTA_POSTS.map(p=>({...p,type:'gta'})),...own];
+ if(feedFilterMode==='gta')items=items.filter(p=>p.type==='gta');
+ if(feedFilterMode==='mine')items=items.filter(p=>p.type==='local');
+ if(feedFilterMode==='liked')items=items.filter(p=>p.type==='local'?!!photos.find(x=>x.id===p.photoId)?.liked:likedGta.includes(p.id));
+ if(feedSearchText){const q=feedSearchText.toLowerCase();items=items.filter(p=>(p.user+' '+p.place+' '+p.caption).toLowerCase().includes(q))}
+ const total=items.length,chunk=items.slice(feedPage*20,(feedPage+1)*20);
+ $('#feedCounter').textContent=total.toLocaleString()+' POSTS · '+(feedFilterMode==='mine'?'YOUR CAMERA ROLL':'VICE CITY & LEONIDA');
+ chunk.forEach(p=>{
   const post=document.createElement('article');post.className='feed-post '+(p.type==='local'?'local-post':'gta-post');
   const image=document.createElement('img');image.className='post-image';image.alt='Snapmatic post from '+p.place;image.src=p.image;image.loading='lazy';
   const content=document.createElement('div');content.className='post-content';
@@ -106,16 +161,15 @@ function renderFeed(){
   const likes=document.createElement('span');likes.className='post-count';likes.textContent=(p.likes+(p.type==='gta'&&liked?1:0)).toLocaleString();
   const comment=document.createElement('button');comment.className='comment-feed';comment.textContent='▢';comment.setAttribute('aria-label','Comments');
   const comments=document.createElement('span');comments.className='post-count';comments.textContent=p.type==='gta'?String(p.comments+(gtaComments[p.id]||[]).length):String((photos.find(x=>x.id===p.photoId)?.comments||[]).length);
-  like.onclick=()=>{
-   if(p.type==='gta'){likedGta=likedGta.includes(p.id)?likedGta.filter(x=>x!==p.id):likedGta.concat(p.id);localStorage.setItem('snapmatic-gta-likes',JSON.stringify(likedGta))}
-   else{const own=photos.find(x=>x.id===p.photoId);if(own){own.liked=!own.liked;saveLibrary();renderGallery();renderProfile()}}
-   renderFeed();
-  };
+  like.onclick=()=>{if(p.type==='gta'){likedGta=likedGta.includes(p.id)?likedGta.filter(x=>x!==p.id):likedGta.concat(p.id);localStorage.setItem('snapmatic-gta-likes',JSON.stringify(likedGta))}else{const ownPhoto=photos.find(x=>x.id===p.photoId);if(ownPhoto){ownPhoto.liked=!ownPhoto.liked;saveLibrary();renderGallery();renderProfile()}}renderFeed()};
   comment.onclick=()=>openComments(p.type==='gta'?{type:'gta',id:p.id}:{type:'local',id:p.photoId});
   actions.append(like,likes,comment,comments);
   const timestamp=document.createElement('div');timestamp.className='post-time';timestamp.textContent=p.time||'JUST NOW';
   content.append(userline,caption,actions,timestamp);post.append(image,content);host.append(post);
  });
+ feedPage++;
+ $('#loadMorePosts').hidden=feedPage*20>=total;
+ $('#loadMorePosts').textContent=feedPage*20>=total?'NO MORE POSTS':'LOAD MORE POSTS ↓';
 }
 function openComments(target){
  commentTarget=target;const list=$('#commentsList');list.innerHTML='';
