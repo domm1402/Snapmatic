@@ -28,3 +28,34 @@
 .tab.active{color:#171717}
 #feedScreen .feed-heading,#feedScreen .feed-search,#feedScreen .stories,#feedScreen .feed-toolbar{display:none}
 @media(min-width:521px){#feedScreen{max-width:520px;margin:auto}}
+
+/* Working personal feed */
+#feedScreen{background:#fff;color:#222}
+.feed-compose{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;border-bottom:1px solid #eee;background:#fff}
+.feed-compose b{display:block;font-size:11px;letter-spacing:.5px}
+.feed-compose small{display:block;margin-top:3px;color:#888;font-size:10px}
+.feed-compose button{border:0;background:#222;color:#fff;padding:10px 14px;font-size:10px;font-weight:800;letter-spacing:.7px}
+#feedScreen .feed-post{margin:0 0 10px;border-bottom:8px solid #f3f3f3}
+#feedScreen .post-image{aspect-ratio:1.08/1;cursor:pointer}
+#feedScreen .post-content{padding:11px 15px 15px}
+#feedScreen .post-userline{margin-bottom:10px}
+#feedScreen .post-avatar.initials{display:grid;place-items:center;background:#ececec;color:#333;font-size:11px;font-weight:800}
+#feedScreen .post-caption{white-space:pre-wrap;overflow-wrap:anywhere}
+#feedScreen .caption-empty{display:none}
+#feedScreen .post-actions{gap:7px}
+#feedScreen .post-actions button{font-size:25px}
+#feedScreen .post-count{font-size:13px;margin-right:10px}
+#feedScreen .post-time{padding:10px 0 0;color:#999;font-size:8px;letter-spacing:.4px}
+.feed-empty{text-align:center;padding:70px 25px;color:#222}
+.feed-empty h2{font:700 25px 'DM Sans',sans-serif;margin:0 0 9px}
+.feed-empty p{font-size:13px;line-height:1.5;color:#777;margin:0 auto 20px;max-width:270px}
+.feed-empty .yellow-btn{background:#222;color:white}
+.comments-card{max-height:75dvh;display:flex;flex-direction:column}
+.comments-list{padding:12px 16px;overflow:auto;min-height:100px}
+.no-comments{color:#888;font-size:13px;text-align:center;padding:20px 0}
+.comment-item{padding:10px 0;border-bottom:1px solid #eee}
+.comment-item b{font-size:12px}
+.comment-item p{font-size:13px;margin:5px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.comment-form{display:flex;gap:8px;padding:12px;border-top:1px solid #eee}
+.comment-form input{min-width:0;flex:1;border:1px solid #ddd;padding:11px;font:13px 'DM Sans'}
+.comment-form .yellow-btn{padding:0 15px}
