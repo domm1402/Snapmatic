@@ -42,3 +42,32 @@ $('#exportAll').onclick=exportAll;$('#clearAll').onclick=()=>{if(!photos.length)
 $('#editProfile').onclick=()=>{ $('#displayName').value=profileName;openModal('captionModal')};$('#saveProfile').onclick=()=>{profileName=$('#displayName').value.trim()||'DM';localStorage.setItem('snapmatic-name',profileName);renderProfile();closeModals();toast('PROFILE UPDATED')};
 $('#gridLines').classList.toggle('show',prefs.grid);updateClock();setInterval(updateClock,15000);renderGallery();renderProfile();$('#ratioSelect').value=prefs.ratio;$('#qualitySelect').value=prefs.quality;$('#gridToggle').checked=prefs.grid;$('#locationToggle').checked=prefs.stamp;
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+
+const feedItems = [
+{id:'p1',user:'vice.views',place:'OCEAN DRIVE · VICE CITY',avatar:'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1100&q=85',likes:2481,caption:'Last light over the city. This place never sleeps. #ViceCity #AfterHours',comments:86,time:'12 MIN AGO'},
+{id:'p2',user:'jason.d',place:'LEONIDA KEYS',avatar:'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1100&q=85',likes:1904,caption:'Took the long way home. Would do it again.',comments:43,time:'38 MIN AGO'},
+{id:'p3',user:'coast2coast',place:'SOUTH BEACH',avatar:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=1100&q=85',likes:864,caption:'Blue hour hits different out here. #Coastline',comments:21,time:'1 HOUR AGO'},
+{id:'p4',user:'nightshift.305',place:'DOWNTOWN VICE CITY',avatar:'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=100&q=80',image:'https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=1100&q=85',likes:3210,caption:'No plans. No rush. Just keep driving.',comments:107,time:'2 HOURS AGO'}
+];
+let likedFeed = JSON.parse(localStorage.getItem('snapmatic-feed-likes') || '[]');
+function renderFeed(query='') {
+ const host=$('#feedPosts'); if(!host)return; host.innerHTML='';
+ const q=query.trim().toLowerCase();
+ const rows=feedItems.filter(p=>(p.user+' '+p.place+' '+p.caption).toLowerCase().includes(q));
+ rows.forEach(p=>{
+  const liked=likedFeed.includes(p.id),el=document.createElement('article');el.className='feed-post';
+  el.innerHTML='<div class="post-head"><img class="post-avatar" alt="" src="'+p.avatar+'"><div class="post-user"><b>'+p.user+'</b><small>⌖ '+p.place+'</small></div><button class="post-more" aria-label="More">···</button></div><img class="post-image" alt="Photo from '+p.place+'" src="'+p.image+'"><div class="post-actions"><button class="like-feed '+(liked?'liked':'')+'" aria-label="Like">'+(liked?'♥':'♡')+'</button><button class="comment-feed" aria-label="Comment">◯</button><button class="share-feed" aria-label="Share">↗</button><button class="save-post" aria-label="Save">▱</button></div><div class="post-likes">'+(p.likes+(liked?1:0)).toLocaleString()+' LIKES</div><div class="post-caption"><b>'+p.user+'</b>'+p.caption+'</div><div class="post-comments"><button>View all '+p.comments+' comments</button></div><div class="post-time">'+p.time+'</div>';
+  el.querySelector('.like-feed').onclick=()=>{likedFeed=likedFeed.includes(p.id)?likedFeed.filter(x=>x!==p.id):likedFeed.concat(p.id);localStorage.setItem('snapmatic-feed-likes',JSON.stringify(likedFeed));renderFeed($('#feedSearch').value)};
+  el.querySelector('.comment-feed').onclick=()=>toast('COMMENTS · '+p.comments+' ON THIS POST');
+  el.querySelector('.share-feed').onclick=()=>{if(navigator.share)navigator.share({title:'Snapmatic · '+p.user,text:p.caption,url:p.image}).catch(()=>{});else toast('SHARE IS NOT AVAILABLE')};
+  el.querySelector('.save-post').onclick=()=>toast('POST SAVED');
+  el.querySelector('.post-more').onclick=()=>toast('POST OPTIONS');
+  host.append(el);
+ });
+ if(!rows.length)host.innerHTML='<div class="empty-state"><span>⌕</span><h2>No posts found</h2><p>Try another name, place or hashtag.</p></div>';
+}
+$('#feedSearch')?.addEventListener('input',e=>renderFeed(e.target.value));
+$('#feedSearchClear')?.addEventListener('click',()=>{$('#feedSearch').value='';renderFeed()});
+$('#feedSort')?.addEventListener('click',()=>toast('SHOWING THE LATEST POSTS FOR YOU'));
+$$('.story:not(.add-story)').forEach(b=>b.onclick=()=>toast('STORY · '+b.querySelector('small').textContent));
+renderFeed();
